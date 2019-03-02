@@ -69,7 +69,8 @@ function createSchema(req) {
         className,
         req.body.fields,
         req.body.classLevelPermissions,
-        req.body.indexes
+        req.body.indexes,
+        req.body.backendClass
       )
     )
     .then(schema => ({ response: schema }));

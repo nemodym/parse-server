@@ -5,37 +5,90 @@ function mongoFieldToParseSchemaField(type) {
   if (type[0] === '*') {
     return {
       type: 'Pointer',
-      targetClass: type.slice(1),
+      targetClass: type.split('|')[0].slice(1),
+      backendField: type.split('|')[1],
+      transformation: type.split('|')[2],
     };
   }
   if (type.startsWith('relation<')) {
     return {
       type: 'Relation',
       targetClass: type.slice('relation<'.length, type.length - 1),
+      backendField: type.split('|')[1],
+      transformation: type.split('|')[2],
     };
   }
-  switch (type) {
-    case 'number':
-      return { type: 'Number' };
-    case 'string':
-      return { type: 'String' };
-    case 'boolean':
-      return { type: 'Boolean' };
-    case 'date':
-      return { type: 'Date' };
-    case 'map':
-    case 'object':
-      return { type: 'Object' };
-    case 'array':
-      return { type: 'Array' };
-    case 'geopoint':
-      return { type: 'GeoPoint' };
-    case 'file':
-      return { type: 'File' };
-    case 'bytes':
-      return { type: 'Bytes' };
-    case 'polygon':
-      return { type: 'Polygon' };
+
+  if (type.startsWith('number')) {
+    return {
+      type: 'Number',
+      backendField: type.split('|')[1],
+      transformation: type.split('|')[2],
+    };
+  }
+  if (type.startsWith('string')) {
+    return {
+      type: 'String',
+      backendField: type.split('|')[1],
+      transformation: type.split('|')[2],
+    };
+  }
+  if (type.startsWith('boolean')) {
+    return {
+      type: 'Boolean',
+      backendField: type.split('|')[1],
+      transformation: type.split('|')[2],
+    };
+  }
+  if (type.startsWith('date')) {
+    return {
+      type: 'Date',
+      backendField: type.split('|')[1],
+      transformation: type.split('|')[2],
+    };
+  }
+  //if (type.startsWith('map')) {
+  if (type.startsWith('object')) {
+    return {
+      type: 'Object',
+      backendField: type.split('|')[1],
+      transformation: type.split('|')[2],
+    };
+  }
+  if (type.startsWith('array')) {
+    return {
+      type: 'Array',
+      backendField: type.split('|')[1],
+      transformation: type.split('|')[2],
+    };
+  }
+  if (type.startsWith('geopoint')) {
+    return {
+      type: 'GeoPoint',
+      backendField: type.split('|')[1],
+      transformation: type.split('|')[2],
+    };
+  }
+  if (type.startsWith('file')) {
+    return {
+      type: 'File',
+      backendField: type.split('|')[1],
+      transformation: type.split('|')[2],
+    };
+  }
+  if (type.startsWith('bytes')) {
+    return {
+      type: 'Bytes',
+      backendField: type.split('|')[1],
+      transformation: type.split('|')[2],
+    };
+  }
+  if (type.startsWith('polygon')) {
+    return {
+      type: 'Polygon',
+      backendField: type.split('|')[1],
+      transformation: type.split('|')[2],
+    };
   }
 }
 
@@ -78,6 +131,7 @@ const defaultCLPS = Object.freeze({
 function mongoSchemaToParseSchema(mongoSchema) {
   let clps = defaultCLPS;
   let indexes = {};
+  let bcls = '';
   if (mongoSchema._metadata) {
     if (mongoSchema._metadata.class_permissions) {
       clps = { ...emptyCLPS, ...mongoSchema._metadata.class_permissions };
@@ -85,12 +139,16 @@ function mongoSchemaToParseSchema(mongoSchema) {
     if (mongoSchema._metadata.indexes) {
       indexes = { ...mongoSchema._metadata.indexes };
     }
+    if (mongoSchema._metadata.backendClass) {
+      bcls = mongoSchema._metadata.backendClass;
+    }
   }
   return {
     className: mongoSchema._id,
     fields: mongoSchemaFieldsToParseSchemaFields(mongoSchema),
     classLevelPermissions: clps,
     indexes: indexes,
+    backendClass: bcls,
   };
 }
 
@@ -106,32 +164,37 @@ function _mongoSchemaQueryFromNameQuery(name: string, query) {
 
 // Returns a type suitable for inserting into mongo _SCHEMA collection.
 // Does no validation. That is expected to be done in Parse Server.
-function parseFieldTypeToMongoFieldType({ type, targetClass }) {
+function parseFieldTypeToMongoFieldType({
+  type,
+  targetClass,
+  backendField,
+  transformation,
+}) {
   switch (type) {
     case 'Pointer':
-      return `*${targetClass}`;
+      return `*${targetClass}|${backendField}|${transformation}`;
     case 'Relation':
-      return `relation<${targetClass}>`;
+      return `relation<${targetClass}>|${backendField}|${transformation}`;
     case 'Number':
-      return 'number';
+      return `number|${backendField}|${transformation}`;
     case 'String':
-      return 'string';
+      return `string|${backendField}|${transformation}`;
     case 'Boolean':
-      return 'boolean';
+      return `boolean|${backendField}|${transformation}`;
     case 'Date':
-      return 'date';
+      return `date|${backendField}|${transformation}`;
     case 'Object':
-      return 'object';
+      return `object|${backendField}|${transformation}`;
     case 'Array':
-      return 'array';
+      return `array|${backendField}|${transformation}`;
     case 'GeoPoint':
-      return 'geopoint';
+      return `geopoint|${backendField}|${transformation}`;
     case 'File':
-      return 'file';
+      return `file|${backendField}|${transformation}`;
     case 'Bytes':
-      return 'bytes';
+      return `bytes|${backendField}|${transformation}`;
     case 'Polygon':
-      return 'polygon';
+      return `polygon|${backendField}|${transformation}`;
   }
 }
 

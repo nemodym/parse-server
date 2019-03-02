@@ -1296,7 +1296,13 @@ RestWrite.prototype.runDatabaseOperation = function() {
     return defer.then(() => {
       // Run an update
       return this.config.database
-        .update(this.className, this.query, this.data, this.runOptions)
+        .update(
+          this.className,
+          this.query,
+          this.data,
+          this.runOptions,
+          this.auth
+        )
         .then(response => {
           response.updatedAt = this.updatedAt;
           this._updateResponseWithData(response, this.data);
@@ -1326,7 +1332,7 @@ RestWrite.prototype.runDatabaseOperation = function() {
 
     // Run a create
     return this.config.database
-      .create(this.className, this.data, this.runOptions)
+      .create(this.className, this.data, this.runOptions, this.auth)
       .catch(error => {
         if (
           this.className !== '_User' ||

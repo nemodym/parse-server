@@ -5,15 +5,24 @@ export type LoadSchemaOptions = {
 export type SchemaField = {
   type: string,
   targetClass?: ?string,
+  backendField?: ?string,
+  transformation?: ?string,
 };
 
 export type SchemaFields = { [string]: SchemaField };
+
+export type BackendClass = {
+  base: string,
+  find: string,
+  collectionKey: string,
+};
 
 export type Schema = {
   className: string,
   fields: SchemaFields,
   classLevelPermissions: ClassLevelPermissions,
   indexes?: ?any,
+  backendClass?: ?BackendClass,
 };
 
 export type ClassLevelPermissions = {

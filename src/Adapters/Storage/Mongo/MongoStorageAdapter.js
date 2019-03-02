@@ -73,7 +73,8 @@ const mongoSchemaFromFieldsAndClassNameAndCLP = (
   fields,
   className,
   classLevelPermissions,
-  indexes
+  indexes,
+  backendClass
 ) => {
   const mongoObject = {
     _id: className,
@@ -105,6 +106,11 @@ const mongoSchemaFromFieldsAndClassNameAndCLP = (
   ) {
     mongoObject._metadata = mongoObject._metadata || {};
     mongoObject._metadata.indexes = indexes;
+  }
+
+  if (backendClass) {
+    mongoObject._metadata = mongoObject._metadata || {};
+    mongoObject._metadata.backendClass = backendClass;
   }
 
   if (!mongoObject._metadata) {
@@ -152,10 +158,7 @@ export class MongoStorageAdapter implements StorageAdapter {
     // encoded
     const encodedUri = formatUrl(parseUrl(this._uri));
 
-    this.connectionPromise = MongoClient.connect(
-      encodedUri,
-      this._mongoOptions
-    )
+    this.connectionPromise = MongoClient.connect(encodedUri, this._mongoOptions)
       .then(client => {
         // Starting mongoDB 3.0, the MongoClient.connect don't return a DB anymore but a client
         // Fortunately, we can get back the options and use them to select the proper DB.
@@ -333,14 +336,16 @@ export class MongoStorageAdapter implements StorageAdapter {
       schema.fields,
       className,
       schema.classLevelPermissions,
-      schema.indexes
+      schema.indexes,
+      schema.backendClass
     );
     mongoObject._id = className;
     return this.setIndexesWithSchemaFormat(
       className,
       schema.indexes,
       {},
-      schema.fields
+      schema.fields,
+      schema.backendClass
     )
       .then(() => this._schemaCollection())
       .then(schemaCollection => schemaCollection.insertSchema(mongoObject))
@@ -385,8 +390,8 @@ export class MongoStorageAdapter implements StorageAdapter {
   deleteAllClasses(fast: boolean) {
     return storageAdapterAllCollections(this).then(collections =>
       Promise.all(
-        collections.map(
-          collection => (fast ? collection.deleteMany({}) : collection.drop())
+        collections.map(collection =>
+          fast ? collection.deleteMany({}) : collection.drop()
         )
       )
     );

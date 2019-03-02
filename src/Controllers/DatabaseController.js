@@ -18,6 +18,86 @@ import type {
   FullQueryOptions,
 } from '../Adapters/Storage/StorageAdapter';
 
+//CD start
+const axios = require('axios');
+const https = require('https');
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+/*
+function queryString(delim, fragment, object) {
+  var t = _.template(fragment);
+  var r = Object.entries(object).map(qu => {
+    return t({
+      k: qu[0],
+      v: qu[1],
+    });
+  });
+  return r.reduce(function(accu, value, i) {
+    if (i === 0) {
+      return value;
+    } else {
+      return accu + ' ' + delim + ' ' + value;
+    }
+  });
+}*/
+/*
+function listString(delim, fragment, array) {
+  var r;
+  if (fragment) {
+    var t = _.template(fragment);
+    r = array.map(qu => {
+      return t({
+        v: qu,
+      });
+    });
+  }
+  r = array;
+  return r.reduce(function(accu, value, i) {
+    if (i === 0) {
+      return value;
+    } else {
+      return accu + delim + ' ' + value;
+    }
+  });
+}
+*/
+var ConnectorExecute = (path, method, auth, data) => {
+  return new Promise((resolve, reject) => {
+    axios({
+      url: path,
+      method: method,
+      data: data,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      auth: {
+        username: auth.user.attributes.connectorUserName,
+        password: auth.user.attributes.connectorUserPassword,
+      },
+      httpsAgent: new https.Agent({ rejectUnauthorized: false }),
+    })
+      .then(response => {
+        if (response.status === 200) {
+          /*var contactdetails = {
+            'name': response.data['First Name'] + ' ' + response.data['Last Name'],
+            'emailid': response.data['Email Address'],
+            'phonenumber': response.data['Work Phone #']
+          }*/
+          return resolve(response);
+        }
+      })
+      .catch((/*err*/) => {
+        //console.log(err);
+        return reject(
+          new Parse.Error(
+            Parse.Error.COMMAND_UNAVAILABLE,
+            `REST request to backend failed`
+          )
+        );
+      });
+  });
+};
+//CD end
+
 function addWriteACL(query, acl) {
   const newQuery = _.cloneDeep(query);
   //Can't be any existing '_wperm' query, we don't allow client queries on that, no need to $and
@@ -489,88 +569,117 @@ class DatabaseController {
       return (isMaster
         ? Promise.resolve()
         : schemaController.validatePermission(className, aclGroup, 'update')
-      )
-        .then(() => {
-          relationUpdates = this.collectRelationUpdates(
+      ).then(() => {
+        relationUpdates = this.collectRelationUpdates(
+          className,
+          originalQuery.objectId,
+          update
+        );
+        if (!isMaster) {
+          query = this.addPointerPermissions(
+            schemaController,
             className,
-            originalQuery.objectId,
-            update
+            'update',
+            query,
+            aclGroup
           );
-          if (!isMaster) {
-            query = this.addPointerPermissions(
-              schemaController,
-              className,
-              'update',
-              query,
-              aclGroup
-            );
-          }
-          if (!query) {
-            return Promise.resolve();
-          }
-          if (acl) {
-            query = addWriteACL(query, acl);
-          }
-          validateQuery(query);
-          return schemaController
-            .getOneSchema(className, true)
-            .catch(error => {
-              // If the schema doesn't exist, pretend it exists with no fields. This behavior
-              // will likely need revisiting.
-              if (error === undefined) {
-                return { fields: {} };
-              }
-              throw error;
-            })
-            .then(schema => {
-              Object.keys(update).forEach(fieldName => {
-                if (fieldName.match(/^authData\.([a-zA-Z0-9_]+)\.id$/)) {
-                  throw new Parse.Error(
-                    Parse.Error.INVALID_KEY_NAME,
-                    `Invalid field name for update: ${fieldName}`
-                  );
-                }
-                const rootFieldName = getRootFieldName(fieldName);
-                if (
-                  !SchemaController.fieldNameIsValid(rootFieldName) &&
-                  !isSpecialUpdateKey(rootFieldName)
-                ) {
-                  throw new Parse.Error(
-                    Parse.Error.INVALID_KEY_NAME,
-                    `Invalid field name for update: ${fieldName}`
-                  );
-                }
-              });
-              for (const updateOperation in update) {
-                if (
-                  update[updateOperation] &&
-                  typeof update[updateOperation] === 'object' &&
-                  Object.keys(update[updateOperation]).some(
-                    innerKey => innerKey.includes('$') || innerKey.includes('.')
-                  )
-                ) {
-                  throw new Parse.Error(
-                    Parse.Error.INVALID_NESTED_KEY,
-                    "Nested keys should not contain the '$' or '.' characters"
-                  );
-                }
-              }
-              update = transformObjectACL(update);
-              transformAuthData(className, update, schema);
-              if (many) {
-                return this.adapter.updateObjectsByQuery(
-                  className,
-                  schema,
-                  query,
-                  update
+        }
+        if (!query) {
+          return Promise.resolve();
+        }
+        if (acl) {
+          query = addWriteACL(query, acl);
+        }
+        validateQuery(query);
+        return schemaController
+          .getOneSchema(className, true)
+          .catch(error => {
+            // If the schema doesn't exist, pretend it exists with no fields. This behavior
+            // will likely need revisiting.
+            if (error === undefined) {
+              return { fields: {} };
+            }
+            throw error;
+          })
+          .then(schema => {
+            Object.keys(update).forEach(fieldName => {
+              if (fieldName.match(/^authData\.([a-zA-Z0-9_]+)\.id$/)) {
+                throw new Parse.Error(
+                  Parse.Error.INVALID_KEY_NAME,
+                  `Invalid field name for update: ${fieldName}`
                 );
-              } else if (upsert) {
-                return this.adapter.upsertOneObject(
-                  className,
-                  schema,
-                  query,
-                  update
+              }
+              const rootFieldName = getRootFieldName(fieldName);
+              if (
+                !SchemaController.fieldNameIsValid(rootFieldName) &&
+                !isSpecialUpdateKey(rootFieldName)
+              ) {
+                throw new Parse.Error(
+                  Parse.Error.INVALID_KEY_NAME,
+                  `Invalid field name for update: ${fieldName}`
                 );
+              }
+            });
+            for (const updateOperation in update) {
+              if (
+                update[updateOperation] &&
+                typeof update[updateOperation] === 'object' &&
+                Object.keys(update[updateOperation]).some(
+                  innerKey => innerKey.includes('$') || innerKey.includes('.')
+                )
+              ) {
+                throw new Parse.Error(
+                  Parse.Error.INVALID_NESTED_KEY,
+                  "Nested keys should not contain the '$' or '.' characters"
+                );
+              }
+            }
+            update = transformObjectACL(update);
+            transformAuthData(className, update, schema);
+            if (many) {
+              return this.adapter.updateObjectsByQuery(
+                className,
+                schema,
+                query,
+                update
+              );
+            } else if (upsert) {
+              return this.adapter.upsertOneObject(
+                className,
+                schema,
+                query,
+                update
+              );
+            } else {
+              if (schema.backendClass) {
+                //convertParseSchematToConnectorSchema()
+                var auth = {};
+                return ConnectorExecute(
+                  schema.backendClass.base,
+                  'post',
+                  auth,
+                  {
+                    Name: 'REST Expense Report1',
+                    'Owner Login': 'SADMIN',
+                    Period: 'Week 27, 2000',
+                    'Start Date': '07/02/2000',
+                    'End Date': '07/08/2000',
+                    Status: 'In Progress',
+                    'Submit To Login': 'BCOOK',
+                    Description: 'New Expense Report REST testing',
+                  }
+                )
+                  .then((/*response*/) => {
+                    return this.adapter.findOneAndUpdate(
+                      className,
+                      schema,
+                      query,
+                      update
+                    );
+                  })
+                  .catch(err => {
+                    throw err;
+                  });
               } else {
                 return this.adapter.findOneAndUpdate(
                   className,
@@ -579,30 +688,31 @@ class DatabaseController {
                   update
                 );
               }
+            }
+          })
+          .then((result: any) => {
+            if (!result) {
+              throw new Parse.Error(
+                Parse.Error.OBJECT_NOT_FOUND,
+                'Object not found.'
+              );
+            }
+            return this.handleRelationUpdates(
+              className,
+              originalQuery.objectId,
+              update,
+              relationUpdates
+            ).then(() => {
+              return result;
             });
-        })
-        .then((result: any) => {
-          if (!result) {
-            throw new Parse.Error(
-              Parse.Error.OBJECT_NOT_FOUND,
-              'Object not found.'
-            );
-          }
-          return this.handleRelationUpdates(
-            className,
-            originalQuery.objectId,
-            update,
-            relationUpdates
-          ).then(() => {
-            return result;
+          })
+          .then(result => {
+            if (skipSanitization) {
+              return Promise.resolve(result);
+            }
+            return sanitizeDatabaseResult(originalUpdate, result);
           });
-        })
-        .then(result => {
-          if (skipSanitization) {
-            return Promise.resolve(result);
-          }
-          return sanitizeDatabaseResult(originalUpdate, result);
-        });
+      });
     });
   }
 
@@ -802,7 +912,8 @@ class DatabaseController {
   create(
     className: string,
     object: any,
-    { acl }: QueryOptions = {}
+    { acl }: QueryOptions = {},
+    auth
   ): Promise<any> {
     // Make a copy of the object, so we don't mutate the incoming data.
     const originalObject = object;
@@ -831,13 +942,74 @@ class DatabaseController {
           .then(schema => {
             transformAuthData(className, object, schema);
             flattenUpdateOperatorsForCreate(object);
-            return this.adapter.createObject(
-              className,
-              SchemaController.convertSchemaToAdapterSchema(schema),
-              object
-            );
-          })
-          .then(result => {
+            if (schema.backendClass) {
+              return this.convertParseDataToConnectorData(schema, object)
+                .then(payLoad =>
+                  ConnectorExecute(
+                    schema.backendClass.base,
+                    'post',
+                    auth,
+                    payLoad
+                    /*{
+                "Name": "REST Expense Report1",
+                "Owner Login": "SADMIN",
+                "Period": "Week 27, 2000",
+                "Start Date": "07/02/2000",
+                "End Date": "07/08/2000",
+                "Status": "In Progress",
+                "Submit To Login": "BCOOK",
+                "Description": "New Expense Report REST testing"
+              }*/
+                  )
+                )
+                .then(response => {
+                  object.connectorId = response.data.items.Id;
+                  return this.adapter
+                    .createObject(
+                      className,
+                      SchemaController.convertSchemaToAdapterSchema(schema),
+                      object
+                    )
+                    .then(result => {
+                      return this.handleRelationUpdates(
+                        className,
+                        object.objectId,
+                        object,
+                        relationUpdates
+                      ).then(() => {
+                        return sanitizeDatabaseResult(
+                          originalObject,
+                          result.ops[0]
+                        );
+                      });
+                    });
+                })
+                .catch(err => {
+                  throw err;
+                });
+            } else {
+              return this.adapter
+                .createObject(
+                  className,
+                  SchemaController.convertSchemaToAdapterSchema(schema),
+                  object
+                )
+                .then(result => {
+                  return this.handleRelationUpdates(
+                    className,
+                    object.objectId,
+                    object,
+                    relationUpdates
+                  ).then(() => {
+                    return sanitizeDatabaseResult(
+                      originalObject,
+                      result.ops[0]
+                    );
+                  });
+                });
+            }
+          });
+        /*.then(result => {
             return this.handleRelationUpdates(
               className,
               object.objectId,
@@ -846,7 +1018,7 @@ class DatabaseController {
             ).then(() => {
               return sanitizeDatabaseResult(originalObject, result.ops[0]);
             });
-          });
+          });*/
       });
   }
 
@@ -1286,26 +1458,57 @@ class DatabaseController {
                   );
                 }
               } else {
-                return this.adapter
-                  .find(className, schema, query, queryOptions)
-                  .then(objects =>
-                    objects.map(object => {
-                      object = untransformObjectACL(object);
-                      return filterSensitiveData(
-                        isMaster,
-                        aclGroup,
+                if (schema.backendClass) {
+                  //convertParseSchematToConnectorSchema()
+                  var connectorURI;
+                  if (query.objectId) {
+                    var compileConnectorURI = _.template(
+                      schema.backendClass.get
+                    );
+                    connectorURI = compileConnectorURI(query.objectId);
+                  } else {
+                    connectorURI = eval('`' + schema.backendClass.query + '`');
+                    /*var finalstr = `https://slc12cqy:16690/siebel/v1.0/data/Expense/Expense?ViewMode=Personal&searchspec=(${queryString(
+                      'AND',
+                      "[${k}] = '${v}'",
+                      query
+                    )})`;
+                    console.log(connectorURI);*/
+                  }
+
+                  return ConnectorExecute(connectorURI, 'get', auth)
+                    .then(connectorresponse => {
+                      return this.convertConnectorDataToParseDataCollection(
                         className,
-                        protectedFields,
-                        object
+                        schema,
+                        connectorresponse
                       );
                     })
-                  )
-                  .catch(error => {
-                    throw new Parse.Error(
-                      Parse.Error.INTERNAL_SERVER_ERROR,
-                      error
-                    );
-                  });
+                    .catch(err => {
+                      throw err;
+                    });
+                } else {
+                  return this.adapter
+                    .find(className, schema, query, queryOptions)
+                    .then(objects =>
+                      objects.map(object => {
+                        object = untransformObjectACL(object);
+                        return filterSensitiveData(
+                          isMaster,
+                          aclGroup,
+                          className,
+                          protectedFields,
+                          object
+                        );
+                      })
+                    )
+                    .catch(error => {
+                      throw new Parse.Error(
+                        Parse.Error.INTERNAL_SERVER_ERROR,
+                        error
+                      );
+                    });
+                }
               }
             });
         });
@@ -1512,6 +1715,237 @@ class DatabaseController {
       adapterInit,
       indexPromise,
     ]);
+  }
+
+  parseUserIdToConnectorUserName(userId): Promise<string> {
+    return this.loadSchema()
+      .then(schemaController => {
+        return schemaController.getOneSchema('_User', true);
+      })
+      .then(userschema =>
+        this.adapter.find('_User', userschema, { _id: userId }, {})
+      )
+      .then(user => {
+        return Promise.resolve(user[0].connectorUserName);
+      })
+      .catch(err => {
+        throw err;
+      });
+  }
+
+  connectorUserNameToParseUserId(userName): Promise<string> {
+    return this.loadSchema()
+      .then(schemaController => {
+        return schemaController.getOneSchema('_User', true);
+      })
+      .then(userschema =>
+        this.adapter.find(
+          '_User',
+          userschema,
+          { connectorUserName: userName },
+          {}
+        )
+      )
+      .then(user => {
+        return Promise.resolve(user[0].objectId);
+      })
+      .catch((/*err*/) => {
+        return Promise.resolve('notuser');
+      });
+  }
+
+  connectorIdToParseObjectId(className, connectorId): Promise<string> {
+    return this.loadSchema()
+      .then(schemaController => {
+        return schemaController.getOneSchema(className, true);
+      })
+      .then(classSchema =>
+        this.adapter.find(
+          className,
+          classSchema,
+          { connectorId: connectorId },
+          {}
+        )
+      )
+      .then(object => {
+        return Promise.resolve(object[0].objectId);
+      })
+      .catch((/*err*/) => {
+        return Promise.resolve('this record was not created through this app');
+      });
+  }
+  /*
+  getParseIdFromConnectorId(schema, connectorId):Promise<string>{
+    return this.adapter.find('_User', userschema, { connectorUserName: userName }, {}))
+      .then((user) => {
+        return Promise.resolve(user[0].objectId);
+      }).
+      catch((err) => {
+        return Promise.resolve("notuser");
+      })
+  }
+*/
+  convertParseDataToConnectorData(schema, object) {
+    return new Promise(resolve => {
+      const nonBackendFields = ['ACL', 'createdAt', 'updatedAt', 'objectId'];
+      var backendfieldsObject = _.fromPairs(
+        Object.entries(object).filter(
+          entry => nonBackendFields.indexOf(entry[0]) === -1
+        )
+      );
+
+      var promises = Object.entries(backendfieldsObject).map(
+        (entry): Promise<any> => {
+          var key, value;
+          key = schema.fields[entry[0]].backendField;
+          var transformation = schema.fields[entry[0]].transformation;
+          var type = schema.fields[entry[0]].type;
+          if (transformation) {
+            if (type === 'Pointer') {
+              if (transformation === 'connectorUserName') {
+                return this.parseUserIdToConnectorUserName(
+                  entry[1].objectId
+                ).then(connectorUserName => {
+                  value = connectorUserName;
+                  return Promise.resolve([key, value]);
+                });
+              }
+            } else if (type === 'Date') {
+              if (transformation === 'Short Date') {
+                const date = new Date(entry[1].iso);
+                const year = date.getFullYear();
+                const month = (1 + date.getMonth()).toString().padStart(2, '0');
+                const day = date
+                  .getDate()
+                  .toString()
+                  .padStart(2, '0');
+
+                value = month + '/' + day + '/' + year;
+                return Promise.resolve([key, value]);
+                //return [key,value];
+              }
+            }
+          } else {
+            value = entry[1];
+            return Promise.resolve([key, value]);
+            //return [key,value];
+          }
+        }
+      );
+      Promise.all(promises).then(entryMap => {
+        var connectorPayload = _.fromPairs(entryMap);
+        return resolve(connectorPayload);
+      });
+    });
+  }
+
+  convertConnectorDataToParseData(className, schema, connectorObject) {
+    return new Promise(resolve => {
+      /*const nonBackendFields = ['ACL', 'createdAt', 'updatedAt', 'objectId'];
+      var backendfieldsObject = _.fromPairs(Object.entries(object).filter(
+        entry => nonBackendFields.indexOf(entry[0]) === -1
+      ));*/
+
+      var promises = Object.entries(connectorObject)
+        .filter(entry => {
+          return Object.keys(schema).indexOf(entry[0]) > -1;
+        })
+        .map(
+          (entry): Promise<any> => {
+            var key, value;
+
+            key = schema[entry[0]].parseField;
+            var transformation = schema[entry[0]].transformation;
+            var type = schema[entry[0]].type;
+            if (transformation) {
+              if (type === 'Pointer') {
+                if (transformation === 'connectorUserName') {
+                  return this.connectorUserNameToParseUserId(entry[1]).then(
+                    parseUserId => {
+                      value = {
+                        __type: 'Pointer',
+                        className: '_User',
+                        objectId: parseUserId,
+                      };
+                      return Promise.resolve([key, value]);
+                    }
+                  );
+                }
+              } else if (type === 'Date') {
+                if (transformation === 'Short Date') {
+                  const date = new Date(entry[1]);
+                  value = {
+                    __type: 'Date',
+                    iso: date.toISOString(),
+                  };
+                  return Promise.resolve([key, value]);
+                  //return [key,value];
+                }
+              }
+            } else {
+              value = entry[1];
+              return Promise.resolve([key, value]);
+              //return [key,value];
+            }
+          }
+        );
+      Promise.all(promises)
+        .then(entryMap => {
+          var parseResponsePayload = _.fromPairs(entryMap);
+          return parseResponsePayload;
+        })
+        .then(parseObject => {
+          return this.connectorIdToParseObjectId(
+            className,
+            connectorObject.Id
+          ).then(parseObjectId => {
+            parseObject.objectId = parseObjectId;
+            return resolve(parseObject);
+          });
+        });
+    });
+  }
+
+  convertConnectorDataToParseDataCollection(
+    className,
+    schema,
+    connectorObjectCollection
+  ) {
+    return new Promise(resolve => {
+      var key, value;
+      var invertedSchema;
+      var invertedSchemaFieldsEntries = Object.entries(schema.fields)
+        .filter(entry => {
+          return entry[1].backendField;
+        })
+        .map(entry => {
+          key = entry[1].backendField;
+          value = entry[1];
+          value.parseField = entry[0];
+          return [key, value];
+        });
+      invertedSchema = _.fromPairs(invertedSchemaFieldsEntries);
+
+      var promises = connectorObjectCollection.data[
+        schema.backendClass.collectionKey
+      ].map(
+        (object): Promise<any> => {
+          return this.convertConnectorDataToParseData(
+            className,
+            invertedSchema,
+            object
+          ).then(convertedObject => {
+            return Promise.resolve(convertedObject);
+          });
+        }
+      );
+
+      Promise.all(promises).then(parseObjectCollection => {
+        /*parseObjectCollection.results = [];
+        parseObjectCollection.results.push(convertedParseObject)*/
+        return resolve(parseObjectCollection);
+      });
+    });
   }
 
   static _validateQuery: any => void;

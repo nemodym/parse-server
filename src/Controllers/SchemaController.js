@@ -402,6 +402,7 @@ class SchemaData {
             data.fields = injectDefaultSchema(schema).fields;
             data.classLevelPermissions = deepcopy(schema.classLevelPermissions);
             data.indexes = schema.indexes;
+            data.backendClass = schema.backendClass;
 
             const classProtectedFields = this.__protectedFields[
               schema.className
@@ -439,6 +440,7 @@ class SchemaData {
             data.fields = schema.fields;
             data.classLevelPermissions = schema.classLevelPermissions;
             data.indexes = schema.indexes;
+            data.backendClass = schema.backendClass;
             this.__data[className] = data;
           }
           return this.__data[className];
@@ -453,6 +455,7 @@ const injectDefaultSchema = ({
   fields,
   classLevelPermissions,
   indexes,
+  backendClass,
 }: Schema) => {
   const defaultSchema: Schema = {
     className,
@@ -462,6 +465,7 @@ const injectDefaultSchema = ({
       ...fields,
     },
     classLevelPermissions,
+    backendClass,
   };
   if (indexes && Object.keys(indexes).length !== 0) {
     defaultSchema.indexes = indexes;
@@ -619,6 +623,7 @@ export default class SchemaController {
           fields: data.fields,
           classLevelPermissions: data.classLevelPermissions,
           indexes: data.indexes,
+          backendClass: data.backendClass,
         });
       }
       return this._cache.getOneSchema(className).then(cached => {
@@ -648,7 +653,8 @@ export default class SchemaController {
     className: string,
     fields: SchemaFields = {},
     classLevelPermissions: any,
-    indexes: any = {}
+    indexes: any = {},
+    backendClass: string
   ): Promise<void> {
     var validationError = this.validateNewClass(
       className,
@@ -667,6 +673,7 @@ export default class SchemaController {
           classLevelPermissions,
           indexes,
           className,
+          backendClass,
         })
       )
       .then(convertAdapterSchemaToParseSchema)
@@ -774,6 +781,7 @@ export default class SchemaController {
                 className: className,
                 fields: schema.fields,
                 classLevelPermissions: schema.classLevelPermissions,
+                backendClass: schema.backendClass,
               };
               if (schema.indexes && Object.keys(schema.indexes).length !== 0) {
                 reloadedSchema.indexes = schema.indexes;
