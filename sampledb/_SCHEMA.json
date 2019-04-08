@@ -1,0 +1,259 @@
+{ 
+    "_id" : "GameScore", 
+    "objectId" : "string", 
+    "updatedAt" : "date", 
+    "createdAt" : "date", 
+    "score" : "number", 
+    "playerName" : "string", 
+    "cheatMode" : "boolean", 
+    "_metadata" : {
+        "indexes" : {
+            "_id_" : {
+                "_id" : NumberInt(1)
+            }
+        }
+    }
+}
+{ 
+    "_id" : "_User", 
+    "objectId" : "string", 
+    "updatedAt" : "date", 
+    "createdAt" : "date", 
+    "username" : "string", 
+    "email" : "string", 
+    "emailVerified" : "boolean", 
+    "authData" : "object", 
+    "_metadata" : {
+        "indexes" : {
+            "_id_" : {
+                "_id" : NumberInt(1)
+            }, 
+            "email_1" : {
+                "email" : NumberInt(1)
+            }, 
+            "username_1" : {
+                "username" : NumberInt(1)
+            }
+        }
+    }, 
+    "connectorUserPassword" : "string", 
+    "connectorUserName" : "string", 
+    "connectorUserId" : "string"
+}
+{ 
+    "_id" : "_Role", 
+    "objectId" : "string", 
+    "updatedAt" : "date", 
+    "createdAt" : "date", 
+    "name" : "string", 
+    "users" : "relation<_User>", 
+    "roles" : "relation<_Role>", 
+    "_metadata" : {
+        "indexes" : {
+            "_id_" : {
+                "_id" : NumberInt(1)
+            }, 
+            "name_1" : {
+                "name" : NumberInt(1)
+            }
+        }
+    }
+}
+{ 
+    "_id" : "TestObject", 
+    "objectId" : "string", 
+    "updatedAt" : "date", 
+    "createdAt" : "date", 
+    "foo" : "string", 
+    "_metadata" : {
+        "indexes" : {
+            "_id_" : {
+                "_id" : NumberInt(1)
+            }
+        }
+    }
+}
+{ 
+    "_id" : "ExpenseReport", 
+    "objectId" : "string", 
+    "updatedAt" : "date", 
+    "createdAt" : "date", 
+    "Name" : "string", 
+    "StartDate" : "date", 
+    "EndDate" : "date", 
+    "Status" : "string", 
+    "Approver" : "*_User", 
+    "ExpenseReportTotal" : "number", 
+    "Description" : "string", 
+    "_metadata" : {
+        "class_permissions" : {
+            "get" : {
+
+            }, 
+            "find" : {
+
+            }, 
+            "create" : {
+                "*" : true
+            }, 
+            "update" : {
+
+            }, 
+            "delete" : {
+
+            }, 
+            "addField" : {
+                "*" : true
+            }, 
+            "readUserFields" : [
+                "Approver", 
+                "Owner"
+            ], 
+            "writeUserFields" : [
+                "Owner"
+            ]
+        }, 
+        "indexes" : {
+            "_id_" : {
+                "_id" : NumberInt(1)
+            }
+        }
+    }, 
+    "Owner" : "*_User", 
+    "complexField" : "array|undefined|undefined", 
+    "onemoreField" : "string|undefined|undefined"
+}
+{ 
+    "_id" : "_Session", 
+    "objectId" : "string", 
+    "updatedAt" : "date", 
+    "createdAt" : "date", 
+    "restricted" : "boolean", 
+    "user" : "*_User", 
+    "installationId" : "string", 
+    "sessionToken" : "string", 
+    "expiresAt" : "date", 
+    "createdWith" : "object", 
+    "_metadata" : {
+        "indexes" : {
+            "_id_" : {
+                "_id" : NumberInt(1)
+            }
+        }
+    }
+}
+{ 
+    "_id" : "TestNewSchema", 
+    "objectId" : "string|Id|connectorId", 
+    "updatedAt" : "date", 
+    "createdAt" : "date", 
+    "_metadata" : {
+        "backendClass" : {
+            "base" : {
+                "uri" : "https://<domain>/siebel/v1.0/data/Expense/Expense", 
+                "method" : "POST"
+            }, 
+            "find" : "https://<domain>/siebel/v1.0/data/Expense/Expense?ViewMode=Personal", 
+            "query" : "https://<domain>/siebel/v1.0/data/Expense/Expense?ViewMode=Personal&searchspec=(${queryString('AND', \"[${k}] = '${v}'\", connectorQuery)})&uniformresponse=y", 
+            "get" : "https://<domain>/siebel/v1.0/data/Expense/Expense/${Id}?uniformresponse=y", 
+            "update" : "https://<domain>/siebel/v1.0/data/Expense/Expense/${Id}", 
+            "delete" : "https://<domain>/siebel/v1.0/data/Expense/Expense/${Id}", 
+            "collectionKey" : "items", 
+            "masterUser" : "SADMIN", 
+            "masterPassword" : "MSSQL"
+        }, 
+        "indexes" : {
+            "_id_" : {
+                "_id" : NumberInt(1)
+            }
+        }, 
+        "class_permissions" : {
+            "get" : {
+
+            }, 
+            "find" : {
+
+            }, 
+            "create" : {
+                "*" : true
+            }, 
+            "update" : {
+                "*" : true
+            }, 
+            "delete" : {
+                "*" : true
+            }, 
+            "addField" : {
+                "*" : true
+            }, 
+            "readUserFields" : [
+                "owner"
+            ]
+        }
+    }, 
+    "name" : "string|Name", 
+    "description" : "string|Description", 
+    "owner" : "*_User|Owner Login|connectorUserName", 
+    "period" : "string|Period", 
+    "startDate" : "date|Start Date|Short Date", 
+    "endDate" : "date|End Date|Short Date", 
+    "status" : "string|Status", 
+    "approver" : "*_User|Submit To Login|connectorUserName", 
+    "connectorId" : "string"
+}
+{ 
+    "_id" : "TestLineItem", 
+    "objectId" : "string|Id|connectorId", 
+    "updatedAt" : "date", 
+    "createdAt" : "date", 
+    "_metadata" : {
+        "backendClass" : {
+            "base" : {
+                "uri" : "https://<domain>/siebel/v1.0/data/Expense/Expense/${Expense_Id}/Expense Report Item", 
+                "method" : "PUT", 
+                "fetchAfterCreate" : true
+            }, 
+            "find" : "https://<domain>/siebel/v1.0/data/Expense/Expense/${Expense_Id}/Expense Report Item?ViewMode=Personal&uniformresponse=y", 
+            "query" : "https://<domain>/siebel/v1.0/data/Expense/Expense/${Expense_Id}/Expense Report Item?ViewMode=Personal&searchspec=(${queryString('AND', \"[${k}] = '${v}'\", connectorQuery)})&uniformresponse=y", 
+            "get" : "https://<domain>/siebel/v1.0/data/Expense/Expense/${Expense_Id}/Expense Report Item$/{Id}?uniformresponse=y", 
+            "update" : "https://<domain>/siebel/v1.0/data/Expense/Expense/${Expense_Id}/Expense Report Item/${Id}", 
+            "delete" : "https://<domain>/siebel/v1.0/data/Expense/Expense/${Expense_Id}/Expense Report Item/${Id}", 
+            "collectionKey" : "items", 
+            "masterUser" : "SADMIN", 
+            "masterPassword" : "MSSQL"
+        }, 
+        "indexes" : {
+            "_id_" : {
+                "_id" : NumberInt(1)
+            }
+        }, 
+        "class_permissions" : {
+            "get" : {
+                "*" : true
+            }, 
+            "find" : {
+                "*" : true
+            }, 
+            "create" : {
+                "*" : true
+            }, 
+            "update" : {
+                "*" : true
+            }, 
+            "delete" : {
+                "*" : true
+            }, 
+            "addField" : {
+                "*" : true
+            }
+        }
+    }, 
+    "startDate" : "date|Start Date|Short Date", 
+    "endDate" : "date|End Date|Short Date", 
+    "type" : "string|Expense Item Type", 
+    "amount" : "string|Amount", 
+    "exchangeRate" : "string|Exchange Rate", 
+    "description" : "string|Description", 
+    "expenseId" : "*TestNewSchema|Expense Id|connectorId", 
+    "connectorId" : "string"
+}

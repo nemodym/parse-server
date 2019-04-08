@@ -1,0 +1,91 @@
+{ 
+    "_id" : "5ZSF2t9CQ0", 
+    "_session_token" : "r:7a934f1ccf3705ba31a48a5ce50ac037", 
+    "_p_user" : "_User$yFsdztK2uH", 
+    "createdWith" : {
+        "action" : "signup", 
+        "authProvider" : "password"
+    }, 
+    "restricted" : false, 
+    "expiresAt" : ISODate("2020-02-12T22:47:30.677+0000"), 
+    "_created_at" : ISODate("2019-02-12T22:47:30.678+0000"), 
+    "_updated_at" : ISODate("2019-02-12T22:47:30.678+0000")
+}
+{ 
+    "_id" : "TDUEtdAjpz", 
+    "_session_token" : "r:070d6467e6494d1ee9f56a8ba7f03c03", 
+    "_p_user" : "_User$oPOEWx1Vsw", 
+    "createdWith" : {
+        "action" : "signup", 
+        "authProvider" : "password"
+    }, 
+    "restricted" : false, 
+    "expiresAt" : ISODate("2020-02-13T04:40:15.978+0000"), 
+    "_created_at" : ISODate("2019-02-13T04:40:15.978+0000"), 
+    "_updated_at" : ISODate("2019-02-13T04:40:15.978+0000")
+}
+{ 
+    "_id" : "G9dd3Ig531", 
+    "_session_token" : "r:ae8af4c426fba04327e479094e5172e7", 
+    "_p_user" : "_User$yFsdztK2uH", 
+    "createdWith" : {
+        "action" : "login", 
+        "authProvider" : "password"
+    }, 
+    "restricted" : false, 
+    "expiresAt" : ISODate("2020-02-13T08:34:25.201+0000"), 
+    "_created_at" : ISODate("2019-02-13T08:34:25.202+0000"), 
+    "_updated_at" : ISODate("2019-02-13T08:34:25.202+0000")
+}
+{ 
+    "_id" : "EkPqxoDA9p", 
+    "_session_token" : "r:1bbf2332fb720e4e312581ed9661fc28", 
+    "_p_user" : "_User$yFsdztK2uH", 
+    "createdWith" : {
+        "action" : "login", 
+        "authProvider" : "password"
+    }, 
+    "restricted" : false, 
+    "expiresAt" : ISODate("2020-02-13T09:00:33.091+0000"), 
+    "_created_at" : ISODate("2019-02-13T09:00:33.091+0000"), 
+    "_updated_at" : ISODate("2019-02-13T09:00:33.091+0000")
+}
+{ 
+    "_id" : "JiJWI2waPW", 
+    "_session_token" : "r:1bcde0009a4d4ae53c8e2437367ea311", 
+    "_p_user" : "_User$oPOEWx1Vsw", 
+    "createdWith" : {
+        "action" : "login", 
+        "authProvider" : "password"
+    }, 
+    "restricted" : false, 
+    "expiresAt" : ISODate("2020-02-13T09:01:23.875+0000"), 
+    "_created_at" : ISODate("2019-02-13T09:01:23.875+0000"), 
+    "_updated_at" : ISODate("2019-02-13T09:01:23.875+0000")
+}
+{ 
+    "_id" : "nrDPrZKCIR", 
+    "_session_token" : "r:a8c66abee0c282bd60c5fa8425bcb89e", 
+    "_p_user" : "_User$vCocyU1AIj", 
+    "createdWith" : {
+        "action" : "signup", 
+        "authProvider" : "password"
+    }, 
+    "restricted" : false, 
+    "expiresAt" : ISODate("2020-02-13T09:06:46.697+0000"), 
+    "_created_at" : ISODate("2019-02-13T09:06:46.697+0000"), 
+    "_updated_at" : ISODate("2019-02-13T09:06:46.697+0000")
+}
+{ 
+    "_id" : "rr3StVRD8C", 
+    "_session_token" : "r:602e71b39a2d0a7f36bc37f64e319b06", 
+    "_p_user" : "_User$vCocyU1AIj", 
+    "createdWith" : {
+        "action" : "login", 
+        "authProvider" : "password"
+    }, 
+    "restricted" : false, 
+    "expiresAt" : ISODate("2020-02-13T09:07:52.930+0000"), 
+    "_created_at" : ISODate("2019-02-13T09:07:52.931+0000"), 
+    "_updated_at" : ISODate("2019-02-13T09:07:52.931+0000")
+}

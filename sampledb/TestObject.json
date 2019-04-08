@@ -1,0 +1,18 @@
+{ 
+    "_id" : "XOie8QfFkI", 
+    "foo" : "bar1", 
+    "_created_at" : ISODate("2019-01-30T00:06:46.505+0000"), 
+    "_updated_at" : ISODate("2019-01-30T00:06:46.505+0000")
+}
+{ 
+    "_id" : "YUJierkd5T", 
+    "foo" : "bar", 
+    "_created_at" : ISODate("2019-01-31T00:15:44.696+0000"), 
+    "_updated_at" : ISODate("2019-01-31T00:15:44.696+0000")
+}
+{ 
+    "_id" : "B4JG3SjPt6", 
+    "foo" : "bar", 
+    "_created_at" : ISODate("2019-03-19T18:40:16.295+0000"), 
+    "_updated_at" : ISODate("2019-03-19T18:40:16.295+0000")
+}

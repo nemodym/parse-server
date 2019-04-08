@@ -1,0 +1,75 @@
+{ 
+    "_id" : "yFsdztK2uH", 
+    "username" : "chandandg1", 
+    "_hashed_password" : "$2a$10$a3zYvZxV1cYVbPZLbnWimOtk6sC3nocqAOYJ.PkR0Tj/.W.3S3JdS", 
+    "_wperm" : [
+        "yFsdztK2uH"
+    ], 
+    "_rperm" : [
+        "*", 
+        "yFsdztK2uH"
+    ], 
+    "_acl" : {
+        "yFsdztK2uH" : {
+            "w" : true, 
+            "r" : true
+        }, 
+        "*" : {
+            "r" : true
+        }
+    }, 
+    "_created_at" : ISODate("2019-02-12T22:47:26.498+0000"), 
+    "_updated_at" : ISODate("2019-02-17T03:16:41.719+0000"), 
+    "connectorUserName" : "SADMIN", 
+    "connectorUserPassword" : "MSSQL"
+}
+{ 
+    "_id" : "oPOEWx1Vsw", 
+    "username" : "chandandg2", 
+    "_hashed_password" : "$2a$10$melssk29lWs9fX3z/24na.6pBwMM0fDyuha0k4LWO/zCdOpSxxLV6", 
+    "_wperm" : [
+        "oPOEWx1Vsw"
+    ], 
+    "_rperm" : [
+        "*", 
+        "oPOEWx1Vsw"
+    ], 
+    "_acl" : {
+        "oPOEWx1Vsw" : {
+            "w" : true, 
+            "r" : true
+        }, 
+        "*" : {
+            "r" : true
+        }
+    }, 
+    "_created_at" : ISODate("2019-02-13T04:40:04.260+0000"), 
+    "_updated_at" : ISODate("2019-02-13T04:40:04.260+0000"), 
+    "connectorUserName" : "BCOOK", 
+    "connectorUserPassword" : "MSSQL"
+}
+{ 
+    "_id" : "vCocyU1AIj", 
+    "username" : "chandandg3", 
+    "_hashed_password" : "$2a$10$Yq0M68zHyvzk7FPZKLFzl.AkLNKxxHJqvj08pvfXbj3y3cTZe26PS", 
+    "_wperm" : [
+        "vCocyU1AIj"
+    ], 
+    "_rperm" : [
+        "*", 
+        "vCocyU1AIj"
+    ], 
+    "_acl" : {
+        "vCocyU1AIj" : {
+            "w" : true, 
+            "r" : true
+        }, 
+        "*" : {
+            "r" : true
+        }
+    }, 
+    "_created_at" : ISODate("2019-02-13T09:04:00.028+0000"), 
+    "_updated_at" : ISODate("2019-02-13T09:04:00.028+0000"), 
+    "connectorUserName" : "KDRESEL", 
+    "connectorUserPassword" : "ldap"
+}

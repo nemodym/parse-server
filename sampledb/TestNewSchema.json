@@ -1,0 +1,14 @@
+{ 
+    "_id" : "d5ZBSS1wWM", 
+    "_p_owner" : "_User$yFsdztK2uH", 
+    "name" : "REST Expense Report1", 
+    "period" : "Week 27, 2000", 
+    "startDate" : ISODate("2000-07-02T00:00:00.000+0000"), 
+    "endDate" : ISODate("2000-07-08T00:00:00.000+0000"), 
+    "status" : "In Progress", 
+    "_p_approver" : "_User$oPOEWx1Vsw", 
+    "description" : "New Expense Report REST testing 1", 
+    "connectorId" : "88-1V6C2V", 
+    "_created_at" : ISODate("2019-03-15T09:52:29.358+0000"), 
+    "_updated_at" : ISODate("2019-03-15T09:52:29.358+0000")
+}

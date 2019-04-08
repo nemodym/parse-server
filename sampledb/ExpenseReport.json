@@ -1,0 +1,19 @@
+{ 
+    "_id" : "Vc2udGd2PH", 
+    "Name" : "New Year Trip", 
+    "StartDate" : ISODate("2019-01-01T00:00:00.000+0000"), 
+    "EndDate" : ISODate("2019-01-05T00:00:00.000+0000"), 
+    "Status" : "Created", 
+    "_p_Approver" : "_User$oPOEWx1Vsw", 
+    "Description" : "Faltu Expense Report", 
+    "_p_Owner" : "_User$yFsdztK2uH", 
+    "_created_at" : ISODate("2019-02-17T04:44:16.693+0000"), 
+    "_updated_at" : ISODate("2019-03-12T00:32:01.895+0000"), 
+    "complexField" : [
+        {
+            "nestedField1" : "thisone", 
+            "nestedField2" : "thistwo"
+        }
+    ], 
+    "onemoreField" : "onemore"
+}

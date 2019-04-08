@@ -1,0 +1,32 @@
+{ 
+    "_id" : "tc6gj25hsw", 
+    "score" : NumberInt(1337), 
+    "playerName" : "Chandu", 
+    "cheatMode" : false, 
+    "_created_at" : ISODate("2019-01-28T03:01:58.680+0000"), 
+    "_updated_at" : ISODate("2019-01-28T03:01:58.680+0000")
+}
+{ 
+    "_id" : "F8ptkbEDLu", 
+    "score" : NumberInt(123), 
+    "playerName" : "Puchu", 
+    "cheatMode" : false, 
+    "_created_at" : ISODate("2019-02-10T01:38:56.435+0000"), 
+    "_updated_at" : ISODate("2019-02-10T01:38:56.435+0000")
+}
+{ 
+    "_id" : "4i09gG3P7T", 
+    "score" : NumberInt(123), 
+    "playerName" : "Puchu", 
+    "cheatMode" : false, 
+    "_created_at" : ISODate("2019-02-10T01:42:35.018+0000"), 
+    "_updated_at" : ISODate("2019-02-10T01:42:35.018+0000")
+}
+{ 
+    "_id" : "YUTP5sHaeq", 
+    "score" : NumberInt(123), 
+    "playerName" : "ghuchu", 
+    "cheatMode" : false, 
+    "_created_at" : ISODate("2019-02-10T01:44:13.078+0000"), 
+    "_updated_at" : ISODate("2019-02-10T01:44:13.078+0000")
+}

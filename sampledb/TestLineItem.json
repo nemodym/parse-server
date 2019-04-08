@@ -1,0 +1,25 @@
+{ 
+    "_id" : "7ZvyWtK0SI", 
+    "startDate" : ISODate("2000-07-03T00:00:00.000+0000"), 
+    "endDate" : ISODate("2000-07-03T00:00:00.000+0000"), 
+    "type" : "Laundry", 
+    "amount" : "3000", 
+    "exchangeRate" : "1", 
+    "description" : "Daag achche hai na na?", 
+    "_p_expenseId" : "TestNewSchema$d5ZBSS1wWM", 
+    "_created_at" : ISODate("2019-03-15T10:12:09.255+0000"), 
+    "_updated_at" : ISODate("2019-03-15T10:12:09.255+0000")
+}
+{ 
+    "_id" : "T0KCFJpyvM", 
+    "startDate" : ISODate("2000-07-03T00:00:00.000+0000"), 
+    "endDate" : ISODate("2000-07-03T00:00:00.000+0000"), 
+    "type" : "Laundry", 
+    "amount" : "3000", 
+    "exchangeRate" : "1", 
+    "description" : "Different Description?", 
+    "_p_expenseId" : "TestNewSchema$d5ZBSS1wWM", 
+    "connectorId" : "88-1V6C4W", 
+    "_created_at" : ISODate("2019-03-15T23:32:58.950+0000"), 
+    "_updated_at" : ISODate("2019-03-15T23:32:58.950+0000")
+}
