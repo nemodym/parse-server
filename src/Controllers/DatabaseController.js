@@ -22,7 +22,16 @@ import type {
 const axios = require('axios');
 const https = require('https');
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
-/*
+
+function trimObjectKeys(object) {
+  return _.fromPairs(
+    Object.entries(object).map(entry => {
+      return [entry[0].toString().replace(' ', '_'), entry[1]];
+    })
+  );
+}
+
+/* eslint-disable no-unused-vars */
 function queryString(delim, fragment, object) {
   var t = _.template(fragment);
   var r = Object.entries(object).map(qu => {
@@ -38,7 +47,8 @@ function queryString(delim, fragment, object) {
       return accu + ' ' + delim + ' ' + value;
     }
   });
-}*/
+}
+/* eslint-enable no-unused-vars */
 /*
 function listString(delim, fragment, array) {
   var r;
@@ -80,18 +90,15 @@ var ConnectorExecute = (path, method, auth, data) => {
           /*var contactdetails = {
             'name': response.data['First Name'] + ' ' + response.data['Last Name'],
             'emailid': response.data['Email Address'],
-            'phonenumber': response.data['Work Phone #']
+            'phonenumber': responsgge.data['Work Phone #']
           }*/
           return resolve(response);
         }
       })
-      .catch((/*err*/) => {
+      .catch(err => {
         //console.log(err);
         return reject(
-          new Parse.Error(
-            Parse.Error.COMMAND_UNAVAILABLE,
-            `REST request to backend failed`
-          )
+          new Parse.Error(Parse.Error.COMMAND_UNAVAILABLE, err.message)
         );
       });
   });
@@ -556,7 +563,8 @@ class DatabaseController {
     query: any,
     update: any,
     { acl, many, upsert }: FullQueryOptions = {},
-    skipSanitization: boolean = false
+    skipSanitization: boolean = false,
+    auth
   ): Promise<any> {
     const originalQuery = query;
     const originalUpdate = update;
@@ -651,43 +659,54 @@ class DatabaseController {
                 update
               );
             } else {
-              if (schema.backendClass) {
-                //convertParseSchematToConnectorSchema()
-                var auth = {};
-                return ConnectorExecute(
-                  schema.backendClass.base,
-                  'post',
-                  auth,
-                  {
-                    Name: 'REST Expense Report1',
-                    'Owner Login': 'SADMIN',
-                    Period: 'Week 27, 2000',
-                    'Start Date': '07/02/2000',
-                    'End Date': '07/08/2000',
-                    Status: 'In Progress',
-                    'Submit To Login': 'BCOOK',
-                    Description: 'New Expense Report REST testing',
-                  }
-                )
-                  .then((/*response*/) => {
-                    return this.adapter.findOneAndUpdate(
+              return this.adapter
+                .findOneAndUpdate(className, schema, query, update)
+                .then(updateResponse => {
+                  if (updateResponse && schema.backendClass) {
+                    var bindObj = {};
+                    var backendBasedFieldsQuery = this.stripSpecialQueryKeys(
+                      query
+                    );
+                    return this.convertParseQueryToConnectorQuery(
                       className,
                       schema,
-                      query,
-                      update
-                    );
-                  })
-                  .catch(err => {
-                    throw err;
-                  });
-              } else {
-                return this.adapter.findOneAndUpdate(
-                  className,
-                  schema,
-                  query,
-                  update
-                );
-              }
+                      backendBasedFieldsQuery
+                    ).then(connectorQuery => {
+                      Object.assign(bindObj, connectorQuery);
+                      return this.convertParseDataToConnectorData(
+                        schema,
+                        update,
+                        updateResponse
+                      ).then(payLoad => {
+                        Object.assign(bindObj, payLoad);
+                        var connectorURI;
+                        var compileConnectorURI = _.template(
+                          schema.backendClass.update
+                        );
+                        var trimmedBindObj = trimObjectKeys(bindObj); // Just to avoid the pesky whitespaces causing _.template to bomb
+                        try {
+                          connectorURI = compileConnectorURI(trimmedBindObj);
+                        } catch (err) {
+                          throw new Parse.Error(
+                            Parse.Error.INTERNAL_SERVER_ERROR,
+                            err.message
+                          );
+                        }
+
+                        payLoad.Id = connectorQuery.Id; // this is due to a bug in Siebel, will remove this once the requirement to supply a bogus Id is fixed
+
+                        return ConnectorExecute(
+                          connectorURI,
+                          'put',
+                          auth,
+                          payLoad
+                        );
+                      });
+                    });
+                  } else {
+                    return updateResponse;
+                  }
+                });
             }
           })
           .then((result: any) => {
@@ -944,26 +963,78 @@ class DatabaseController {
             flattenUpdateOperatorsForCreate(object);
             if (schema.backendClass) {
               return this.convertParseDataToConnectorData(schema, object)
-                .then(payLoad =>
-                  ConnectorExecute(
-                    schema.backendClass.base,
-                    'post',
+                .then(payLoad => {
+                  var connectorURI;
+                  var compileConnectorURI = _.template(
+                    schema.backendClass.base.uri
+                  );
+                  var trimmedPayLoad = trimObjectKeys(payLoad); // Just to avoid the pesky whitespaces causing _.template to bomb
+                  try {
+                    connectorURI = compileConnectorURI(trimmedPayLoad);
+                  } catch (err) {
+                    throw new Parse.Error(
+                      Parse.Error.INTERNAL_SERVER_ERROR,
+                      err.message
+                    );
+                  }
+
+                  var kludgePayLoad = {};
+                  Object.assign(kludgePayLoad, payLoad);
+                  if (schema.backendClass.base.method === 'PUT') {
+                    kludgePayLoad.Id = 'something'; // this is due to a bug in Siebel, will remove this once the requirement to supply a bogus Id is fixed
+                  }
+
+                  return ConnectorExecute(
+                    connectorURI,
+                    schema.backendClass.base.method,
                     auth,
-                    payLoad
-                    /*{
-                "Name": "REST Expense Report1",
-                "Owner Login": "SADMIN",
-                "Period": "Week 27, 2000",
-                "Start Date": "07/02/2000",
-                "End Date": "07/08/2000",
-                "Status": "In Progress",
-                "Submit To Login": "BCOOK",
-                "Description": "New Expense Report REST testing"
-              }*/
-                  )
+                    kludgePayLoad
+                  ).then(response => [payLoad, response]);
+                })
+                .then(
+                  ([
+                    connectorQuery,
+                    connectorResponse,
+                  ]) /*dont change this name!*/ => {
+                    if (schema.backendClass.base.fetchAfterCreate === true) {
+                      var backendBasedFieldsResponseQuery = this.stripSpecialQueryKeys(
+                        connectorQuery
+                      );
+                      var trimmedQuery = trimObjectKeys(
+                        backendBasedFieldsResponseQuery
+                      );
+
+                      Object.keys(trimmedQuery).forEach(key => {
+                        global[key] = trimmedQuery[key];
+                      });
+                      var connectorURI;
+
+                      connectorURI = eval(
+                        '`' + schema.backendClass.query + '`;'
+                      );
+                      Object.keys(trimmedQuery).forEach(key => {
+                        delete global[key];
+                      });
+                      //console.log(connectorURI);
+                      return ConnectorExecute(connectorURI, 'get', auth);
+                    } else {
+                      return connectorResponse;
+                    }
+                  }
                 )
-                .then(response => {
-                  object.connectorId = response.data.items.Id;
+                .then(connectorResponse => {
+                  if (schema.backendClass.base.fetchAfterCreate === true) {
+                    if (connectorResponse.data.items.length != 1) {
+                      //Add implementation here for disabling currect expense report till manual insertion of connectorId
+                      /*console.log(
+                        'Multiple records returned on fetchAfterCreate - please manually update connectorId'
+                      );*/
+                    } else {
+                      object.connectorId = connectorResponse.data.items[0].Id;
+                    }
+                  } else {
+                    object.connectorId = connectorResponse.data.items.Id;
+                  }
                   return this.adapter
                     .createObject(
                       className,
@@ -1458,57 +1529,155 @@ class DatabaseController {
                   );
                 }
               } else {
-                if (schema.backendClass) {
-                  //convertParseSchematToConnectorSchema()
-                  var connectorURI;
-                  if (query.objectId) {
-                    var compileConnectorURI = _.template(
-                      schema.backendClass.get
-                    );
-                    connectorURI = compileConnectorURI(query.objectId);
-                  } else {
-                    connectorURI = eval('`' + schema.backendClass.query + '`');
-                    /*var finalstr = `https://slc12cqy:16690/siebel/v1.0/data/Expense/Expense?ViewMode=Personal&searchspec=(${queryString(
-                      'AND',
-                      "[${k}] = '${v}'",
-                      query
-                    )})`;
-                    console.log(connectorURI);*/
-                  }
-
-                  return ConnectorExecute(connectorURI, 'get', auth)
-                    .then(connectorresponse => {
-                      return this.convertConnectorDataToParseDataCollection(
+                return this.adapter
+                  .find(className, schema, query, queryOptions)
+                  .then(objects =>
+                    objects.map(object => {
+                      object = untransformObjectACL(object);
+                      return filterSensitiveData(
+                        isMaster,
+                        aclGroup,
                         className,
-                        schema,
-                        connectorresponse
+                        protectedFields,
+                        object
                       );
                     })
-                    .catch(err => {
-                      throw err;
-                    });
-                } else {
-                  return this.adapter
-                    .find(className, schema, query, queryOptions)
-                    .then(objects =>
-                      objects.map(object => {
-                        object = untransformObjectACL(object);
-                        return filterSensitiveData(
-                          isMaster,
-                          aclGroup,
-                          className,
-                          protectedFields,
-                          object
-                        );
-                      })
-                    )
-                    .catch(error => {
-                      throw new Parse.Error(
-                        Parse.Error.INTERNAL_SERVER_ERROR,
-                        error
+                  )
+                  .catch(error => {
+                    throw new Parse.Error(
+                      Parse.Error.INTERNAL_SERVER_ERROR,
+                      error
+                    );
+                  })
+                  .then(findResponse => {
+                    if (findResponse.length > 0 && schema.backendClass) {
+                      //convertParseSchematToConnectorSchema()
+                      if (auth.isMaster === true) {
+                        auth.user = {
+                          attributes: {
+                            connectorUserName: schema.backendClass.masterUser,
+                            connectorUserPassword:
+                              schema.backendClass.masterPassword,
+                          },
+                        };
+                      }
+                      var backendBasedFieldsQuery = this.stripSpecialQueryKeys(
+                        query
                       );
-                    });
-                }
+                      if (Object.keys(backendBasedFieldsQuery).length < 1) {
+                        var connectorURI;
+                        var compileConnectorURI = _.template(
+                          schema.backendClass.find
+                        );
+                        var trimmedQuery = trimObjectKeys(
+                          backendBasedFieldsQuery
+                        ); // Just to avoid the pesky whitespaces causing _.template to bomb
+                        try {
+                          connectorURI = compileConnectorURI(trimmedQuery);
+                        } catch (err) {
+                          throw new Parse.Error(
+                            Parse.Error.INTERNAL_SERVER_ERROR,
+                            err.message
+                          );
+                        }
+
+                        return ConnectorExecute(connectorURI, 'get', auth)
+                          .then(connectorresponse => {
+                            return this.filterConnectorCollectionByParseAccess(
+                              schema,
+                              findResponse,
+                              connectorresponse
+                            );
+                          })
+                          .then(
+                            ([
+                              filteredConnectorResponse,
+                              connectorToParseObjectMap,
+                            ]) => {
+                              return this.convertConnectorDataToParseDataCollection(
+                                className,
+                                schema,
+                                filteredConnectorResponse,
+                                connectorToParseObjectMap
+                              );
+                            }
+                          )
+                          .catch(err => {
+                            throw err;
+                          });
+                      } else {
+                        return this.convertParseQueryToConnectorQuery(
+                          className,
+                          schema,
+                          backendBasedFieldsQuery
+                        ).then(connectorQuery => {
+                          var connectorURI;
+                          var trimmedQuery = trimObjectKeys(connectorQuery); // Just to avoid the pesky whitespaces causing _.template to bomb
+                          if (
+                            backendBasedFieldsQuery.objectId &&
+                            Object.keys(backendBasedFieldsQuery).length === 1
+                          ) {
+                            var compileConnectorURI = _.template(
+                              schema.backendClass.get
+                            );
+
+                            try {
+                              connectorURI = compileConnectorURI(trimmedQuery);
+                            } catch (err) {
+                              throw new Parse.Error(
+                                Parse.Error.INTERNAL_SERVER_ERROR,
+                                err.message
+                              );
+                            }
+                          } else {
+                            Object.keys(trimmedQuery).forEach(key => {
+                              global[key] = trimmedQuery[key];
+                            });
+                            connectorURI = eval(
+                              '`' + schema.backendClass.query + '`;'
+                            );
+                            Object.keys(trimmedQuery).forEach(key => {
+                              delete global[key];
+                            });
+                            //connectorURI = eval('`' + schema.backendClass.query + '`');
+                            /*var finalstr = `https://slc12cqy:16690/siebel/v1.0/data/Expense/Expense?ViewMode=Personal&searchspec=(${queryString(
+                              'AND',
+                              "[${k}] = '${v}'",
+                              query
+                            )})`;*/
+                            //console.log(connectorURI);
+                          }
+
+                          return ConnectorExecute(connectorURI, 'get', auth)
+                            .then(connectorresponse => {
+                              return this.filterConnectorCollectionByParseAccess(
+                                schema,
+                                findResponse,
+                                connectorresponse
+                              );
+                            })
+                            .then(
+                              ([
+                                filteredConnectorResponse,
+                                connectorToParseObjectMap,
+                              ]) => {
+                                return this.convertConnectorDataToParseDataCollection(
+                                  className,
+                                  schema,
+                                  filteredConnectorResponse,
+                                  connectorToParseObjectMap
+                                );
+                              }
+                            )
+                            .catch(err => {
+                              throw err;
+                            });
+                        });
+                      }
+                    } else {
+                      return findResponse;
+                    }
+                  });
               }
             });
         });
@@ -1717,6 +1886,11 @@ class DatabaseController {
     ]);
   }
 
+  stripSpecialQueryKeys(query) {
+    return _.fromPairs(
+      Object.entries(query).filter(entry => !isSpecialQueryKey(entry[0]))
+    );
+  }
   parseUserIdToConnectorUserName(userId): Promise<string> {
     return this.loadSchema()
       .then(schemaController => {
@@ -1727,6 +1901,26 @@ class DatabaseController {
       )
       .then(user => {
         return Promise.resolve(user[0].connectorUserName);
+      })
+      .catch(err => {
+        throw err;
+      });
+  }
+
+  parsePointerObjectIdToConnectorField(
+    className,
+    pointerId,
+    connectorFieldName
+  ): Promise<string> {
+    return this.loadSchema()
+      .then(schemaController => {
+        return schemaController.getOneSchema(className, true);
+      })
+      .then(classSchema =>
+        this.adapter.find(className, classSchema, { _id: pointerId }, {})
+      )
+      .then(record => {
+        return Promise.resolve(record[0][connectorFieldName]);
       })
       .catch(err => {
         throw err;
@@ -1754,6 +1948,28 @@ class DatabaseController {
       });
   }
 
+  connectorFieldToParsePointerObjectId(
+    className,
+    connectorField,
+    connectorFieldValue
+  ): Promise<string> {
+    return this.loadSchema()
+      .then(schemaController => {
+        return schemaController.getOneSchema(className, true);
+      })
+      .then(pointerSchema => {
+        var searchSpec = {};
+        searchSpec[connectorField] = connectorFieldValue;
+        return this.adapter.find(className, pointerSchema, searchSpec, {});
+      })
+      .then(record => {
+        return Promise.resolve(record[0].objectId);
+      })
+      .catch((/*err*/) => {
+        return Promise.resolve('notInParseDB');
+      });
+  }
+
   connectorIdToParseObjectId(className, connectorId): Promise<string> {
     return this.loadSchema()
       .then(schemaController => {
@@ -1771,9 +1987,26 @@ class DatabaseController {
         return Promise.resolve(object[0].objectId);
       })
       .catch((/*err*/) => {
+        return Promise.resolve(null);
+      });
+  }
+
+  parseObjectIdToConnectorId(className, objectId): Promise<string> {
+    return this.loadSchema()
+      .then(schemaController => {
+        return schemaController.getOneSchema(className, true);
+      })
+      .then(classSchema =>
+        this.adapter.find(className, classSchema, { objectId: objectId }, {})
+      )
+      .then(object => {
+        return Promise.resolve(object[0].connectorId);
+      })
+      .catch((/*err*/) => {
         return Promise.resolve('this record was not created through this app');
       });
   }
+
   /*
   getParseIdFromConnectorId(schema, connectorId):Promise<string>{
     return this.adapter.find('_User', userschema, { connectorUserName: userName }, {}))
@@ -1785,9 +2018,14 @@ class DatabaseController {
       })
   }
 */
-  convertParseDataToConnectorData(schema, object) {
+  convertParseDataToConnectorData(schema, object, parseUpdateObject) {
     return new Promise(resolve => {
-      const nonBackendFields = ['ACL', 'createdAt', 'updatedAt', 'objectId'];
+      var nonBackendFields;
+      if (parseUpdateObject) {
+        nonBackendFields = ['ACL', 'createdAt', 'updatedAt'];
+      } else {
+        nonBackendFields = ['ACL', 'createdAt', 'updatedAt', 'objectId'];
+      }
       var backendfieldsObject = _.fromPairs(
         Object.entries(object).filter(
           entry => nonBackendFields.indexOf(entry[0]) === -1
@@ -1807,6 +2045,231 @@ class DatabaseController {
                   entry[1].objectId
                 ).then(connectorUserName => {
                   value = connectorUserName;
+                  return Promise.resolve([key, value]);
+                });
+              } else {
+                return this.parsePointerObjectIdToConnectorField(
+                  entry[1].className,
+                  entry[1].objectId,
+                  transformation
+                ).then(connectorFieldValue => {
+                  value = connectorFieldValue;
+                  return Promise.resolve([key, value]);
+                });
+              }
+            } else if (type === 'Date') {
+              if (transformation === 'Short Date') {
+                const date = new Date(entry[1].iso);
+                const year = date.getFullYear();
+                const month = (1 + date.getMonth()).toString().padStart(2, '0');
+                const day = date
+                  .getDate()
+                  .toString()
+                  .padStart(2, '0');
+
+                value = month + '/' + day + '/' + year;
+                return Promise.resolve([key, value]);
+                //return [key,value];
+              }
+            } else if (parseUpdateObject) {
+              if (entry[0] === 'objectId') {
+                value = parseUpdateObject.connectorId;
+                return Promise.resolve([key, value]);
+              }
+            }
+          } else {
+            value = entry[1];
+            return Promise.resolve([key, value]);
+            //return [key,value];
+          }
+        }
+      );
+      Promise.all(promises).then(entryMap => {
+        var connectorPayload = _.fromPairs(entryMap);
+        return resolve(connectorPayload);
+      });
+    });
+  }
+
+  convertConnectorDataToParseData(
+    className,
+    schema,
+    connectorObject,
+    parseLocalObject
+  ) {
+    return new Promise(resolve => {
+      const exclusionFields = ['connectorId'];
+      var parseFieldsObject = _.fromPairs(
+        Object.entries(connectorObject).filter(
+          entry => exclusionFields.indexOf(entry[0]) === -1
+        )
+      );
+      //Remove this - not needed any more as all non matching parse Local records have already been filtered
+      //var parseId;
+      this.connectorIdToParseObjectId(className, connectorObject.Id)
+        .then(
+          parseObjectId => {
+            if (parseObjectId) {
+              //parseId = parseObjectId;
+              //return resolve(parseObject);
+            } else {
+              return resolve(null);
+            }
+          } //Remove this - not needed any more as all non matching parse Local records have already been filtered
+        )
+        .then(() => {
+          var promises = Object.entries(parseFieldsObject)
+            .filter(entry => {
+              return Object.keys(schema).indexOf(entry[0]) > -1;
+            })
+            .map(
+              (entry): Promise<any> => {
+                var key, value;
+
+                key = schema[entry[0]].parseField;
+                var transformation = schema[entry[0]].transformation;
+                var type = schema[entry[0]].type;
+                if (transformation) {
+                  if (type === 'Pointer') {
+                    var targetClass = schema[entry[0]].targetClass;
+                    if (transformation === 'connectorUserName') {
+                      return this.connectorUserNameToParseUserId(entry[1]).then(
+                        parseUserId => {
+                          value = {
+                            __type: 'Pointer',
+                            className: '_User',
+                            objectId: parseUserId,
+                          };
+                          return Promise.resolve([key, value]);
+                        }
+                      );
+                    } else {
+                      return this.connectorFieldToParsePointerObjectId(
+                        targetClass,
+                        transformation,
+                        entry[1]
+                      ).then(parseObjectId => {
+                        value = {
+                          __type: 'Pointer',
+                          className: targetClass,
+                          objectId: parseObjectId,
+                        };
+                        return Promise.resolve([key, value]);
+                      });
+                    }
+                  } else if (type === 'Date') {
+                    if (transformation === 'Short Date') {
+                      const date = new Date(entry[1]);
+                      value = {
+                        __type: 'Date',
+                        iso: date.toISOString(),
+                      };
+                      return Promise.resolve([key, value]);
+                      //return [key,value];
+                    }
+                  } else {
+                    value = entry[1];
+                    return Promise.resolve([key, value]);
+                  }
+                } else {
+                  value = entry[1];
+                  return Promise.resolve([key, value]);
+                  //return [key,value];
+                }
+              }
+            );
+
+          Promise.all(promises)
+            .then(entryMap => {
+              var parseResponsePayload = _.fromPairs(entryMap);
+              return parseResponsePayload;
+            })
+            .then(parseObject => {
+              parseObject.objectId = parseLocalObject.objectId;
+              parseObject.updatedAt = parseLocalObject.updatedAt;
+              parseObject.createdAt = parseLocalObject.createdAt;
+              return resolve(parseObject);
+            });
+        });
+    });
+  }
+
+  convertConnectorDataToParseDataCollection(
+    className,
+    schema,
+    connectorObjectCollection,
+    connectorToParseObjectMap
+  ) {
+    return new Promise(resolve => {
+      var key, value;
+      var invertedSchema;
+      var invertedSchemaFieldsEntries = Object.entries(schema.fields)
+        .filter(entry => {
+          return entry[1].backendField;
+        })
+        .map(entry => {
+          key = entry[1].backendField;
+          value = entry[1];
+          value.parseField = entry[0];
+          return [key, value];
+        });
+      invertedSchema = _.fromPairs(invertedSchemaFieldsEntries);
+
+      var promises = connectorObjectCollection.map(
+        (object): Promise<any> => {
+          return this.convertConnectorDataToParseData(
+            className,
+            invertedSchema,
+            object,
+            connectorToParseObjectMap.get(object.Id)
+          ).then(convertedObject => {
+            return Promise.resolve(convertedObject);
+          });
+        }
+      );
+
+      Promise.all(promises).then(parseObjectCollection => {
+        /*parseObjectCollection.results = [];
+        parseObjectCollection.results.push(convertedParseObject)*/
+        return resolve(parseObjectCollection.filter(entry => entry != null));
+        //return resolve(parseObjectCollection);
+      });
+    });
+  }
+
+  convertParseQueryToConnectorQuery(className, schema, backendfieldsQuery) {
+    return new Promise(resolve => {
+      var promises = Object.entries(backendfieldsQuery).map(
+        (entry): Promise<any> => {
+          var key, value;
+          key = schema.fields[entry[0]].backendField;
+          //special treatment for ObjectId. Can remove.
+          if (key === 'Id') {
+            return this.parseObjectIdToConnectorId(className, entry[1]).then(
+              connectorId => {
+                value = connectorId;
+                return Promise.resolve([key, value]);
+              }
+            );
+          }
+          var transformation = schema.fields[entry[0]].transformation;
+          var type = schema.fields[entry[0]].type;
+          if (transformation) {
+            if (type === 'Pointer') {
+              if (transformation === 'connectorUserName') {
+                return this.parseUserIdToConnectorUserName(
+                  entry[1].objectId
+                ).then(connectorUserName => {
+                  value = connectorUserName;
+                  return Promise.resolve([key, value]);
+                });
+              } else {
+                return this.parsePointerObjectIdToConnectorField(
+                  entry[1].className,
+                  entry[1].objectId,
+                  transformation
+                ).then(connectorFieldValue => {
+                  value = connectorFieldValue;
                   return Promise.resolve([key, value]);
                 });
               }
@@ -1839,113 +2302,26 @@ class DatabaseController {
     });
   }
 
-  convertConnectorDataToParseData(className, schema, connectorObject) {
-    return new Promise(resolve => {
-      /*const nonBackendFields = ['ACL', 'createdAt', 'updatedAt', 'objectId'];
-      var backendfieldsObject = _.fromPairs(Object.entries(object).filter(
-        entry => nonBackendFields.indexOf(entry[0]) === -1
-      ));*/
-
-      var promises = Object.entries(connectorObject)
-        .filter(entry => {
-          return Object.keys(schema).indexOf(entry[0]) > -1;
-        })
-        .map(
-          (entry): Promise<any> => {
-            var key, value;
-
-            key = schema[entry[0]].parseField;
-            var transformation = schema[entry[0]].transformation;
-            var type = schema[entry[0]].type;
-            if (transformation) {
-              if (type === 'Pointer') {
-                if (transformation === 'connectorUserName') {
-                  return this.connectorUserNameToParseUserId(entry[1]).then(
-                    parseUserId => {
-                      value = {
-                        __type: 'Pointer',
-                        className: '_User',
-                        objectId: parseUserId,
-                      };
-                      return Promise.resolve([key, value]);
-                    }
-                  );
-                }
-              } else if (type === 'Date') {
-                if (transformation === 'Short Date') {
-                  const date = new Date(entry[1]);
-                  value = {
-                    __type: 'Date',
-                    iso: date.toISOString(),
-                  };
-                  return Promise.resolve([key, value]);
-                  //return [key,value];
-                }
-              }
-            } else {
-              value = entry[1];
-              return Promise.resolve([key, value]);
-              //return [key,value];
-            }
-          }
-        );
-      Promise.all(promises)
-        .then(entryMap => {
-          var parseResponsePayload = _.fromPairs(entryMap);
-          return parseResponsePayload;
-        })
-        .then(parseObject => {
-          return this.connectorIdToParseObjectId(
-            className,
-            connectorObject.Id
-          ).then(parseObjectId => {
-            parseObject.objectId = parseObjectId;
-            return resolve(parseObject);
-          });
-        });
-    });
-  }
-
-  convertConnectorDataToParseDataCollection(
-    className,
+  filterConnectorCollectionByParseAccess(
     schema,
+    findResponse,
     connectorObjectCollection
   ) {
-    return new Promise(resolve => {
-      var key, value;
-      var invertedSchema;
-      var invertedSchemaFieldsEntries = Object.entries(schema.fields)
-        .filter(entry => {
-          return entry[1].backendField;
-        })
-        .map(entry => {
-          key = entry[1].backendField;
-          value = entry[1];
-          value.parseField = entry[0];
-          return [key, value];
-        });
-      invertedSchema = _.fromPairs(invertedSchemaFieldsEntries);
-
-      var promises = connectorObjectCollection.data[
-        schema.backendClass.collectionKey
-      ].map(
-        (object): Promise<any> => {
-          return this.convertConnectorDataToParseData(
-            className,
-            invertedSchema,
-            object
-          ).then(convertedObject => {
-            return Promise.resolve(convertedObject);
-          });
-        }
-      );
-
-      Promise.all(promises).then(parseObjectCollection => {
-        /*parseObjectCollection.results = [];
-        parseObjectCollection.results.push(convertedParseObject)*/
-        return resolve(parseObjectCollection);
-      });
-    });
+    var connectorObjectToParseObjectMap = new Map();
+    var filteredConnectorObjectCollection = connectorObjectCollection.data[
+      schema.backendClass.collectionKey
+    ].filter(
+      object =>
+        findResponse.filter(record => {
+          if (object.Id === record['connectorId']) {
+            connectorObjectToParseObjectMap.set(object.Id, record);
+            return true;
+          } else {
+            return false;
+          }
+        }).length > 0
+    );
+    return [filteredConnectorObjectCollection, connectorObjectToParseObjectMap];
   }
 
   static _validateQuery: any => void;

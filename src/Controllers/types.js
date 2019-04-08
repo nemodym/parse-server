@@ -12,9 +12,19 @@ export type SchemaField = {
 export type SchemaFields = { [string]: SchemaField };
 
 export type BackendClass = {
-  base: string,
+  base: RESTRequestDetails,
   find: string,
+  query: string,
+  get: string,
+  update: string,
   collectionKey: string,
+  masterUser: string,
+  masterPassword: string,
+};
+
+export type RESTRequestDetails = {
+  uri: string,
+  method: string,
 };
 
 export type Schema = {

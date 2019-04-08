@@ -1301,6 +1301,7 @@ RestWrite.prototype.runDatabaseOperation = function() {
           this.query,
           this.data,
           this.runOptions,
+          null,
           this.auth
         )
         .then(response => {

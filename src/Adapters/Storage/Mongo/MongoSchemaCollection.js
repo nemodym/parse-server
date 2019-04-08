@@ -104,7 +104,9 @@ function mongoSchemaFieldsToParseSchemaFields(schema) {
   response.ACL = { type: 'ACL' };
   response.createdAt = { type: 'Date' };
   response.updatedAt = { type: 'Date' };
-  response.objectId = { type: 'String' };
+  if (!response.objectId.backendField) {
+    response.objectId = { type: 'String' };
+  }
   return response;
 }
 
