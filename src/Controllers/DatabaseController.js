@@ -1025,10 +1025,12 @@ class DatabaseController {
                 .then(connectorResponse => {
                   if (schema.backendClass.base.fetchAfterCreate === true) {
                     if (connectorResponse.data.items.length != 1) {
+                      /* eslint-disable no-console */
                       //Add implementation here for disabling currect expense report till manual insertion of connectorId
-                      /*console.log(
+                      console.log(
                         'Multiple records returned on fetchAfterCreate - please manually update connectorId'
-                      );*/
+                      );
+                      /* eslint-enable no-console */
                     } else {
                       object.connectorId = connectorResponse.data.items[0].Id;
                     }
