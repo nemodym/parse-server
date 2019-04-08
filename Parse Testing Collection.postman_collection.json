@@ -1,0 +1,315 @@
+{
+	"info": {
+		"_postman_id": "92ded7ae-16a9-4362-9d5b-52e2bb605d8e",
+		"name": "Parse Testing Collection",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "http://localhost:1337/parse/classes/TestNewSchema",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "X-Parse-Application-Id",
+						"value": "myAppId1",
+						"type": "text"
+					},
+					{
+						"key": "x-Parse-Session-Token",
+						"value": "r:ae8af4c426fba04327e479094e5172e7",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"owner\": {\n        \"__type\": \"Pointer\",\n        \"className\": \"_User\",\n        \"objectId\": \"yFsdztK2uH\"\n    },\n    \"name\": \"REST Expense Report1\",\n    \"period\": \"Week 27, 2000\",\n    \"startDate\": {\n        \"__type\": \"Date\",\n        \"iso\": \"2000-07-02T00:00:00.000Z\"\n    },\n    \"endDate\": {\n        \"__type\": \"Date\",\n        \"iso\": \"2000-07-08T00:00:00.000Z\"\n    },\n    \"status\": \"In Progress\",\n    \"approver\": {\n        \"__type\": \"Pointer\",\n        \"className\": \"_User\",\n        \"objectId\": \"oPOEWx1Vsw\"\n    },\n    \"description\": \"New Expense Report REST testing 1\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:1337/parse/classes/TestNewSchema",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "1337",
+					"path": [
+						"parse",
+						"classes",
+						"TestNewSchema"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "http://localhost:1337/parse/classes/TestNewSchema",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "username",
+							"value": "SADMIN",
+							"type": "string"
+						},
+						{
+							"key": "password",
+							"value": "MSSQL",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "http://localhost:1337/parse/classes/TestNewSchema",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "1337",
+					"path": [
+						"parse",
+						"classes",
+						"TestNewSchema"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "http://localhost:1337/parse/classes/TestLineItem",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "X-Parse-Application-Id",
+						"value": "myAppId1",
+						"type": "text"
+					},
+					{
+						"key": "X-Parse-Master-Key",
+						"value": "myMasterKey",
+						"type": "text",
+						"disabled": true
+					},
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "X-Parse-Session-Token",
+						"value": "r:ae8af4c426fba04327e479094e5172e7",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"startDate\": {\n        \"__type\": \"Date\",\n        \"iso\": \"2000-07-03T00:00:00.000Z\"\n    },\n    \"endDate\": {\n        \"__type\": \"Date\",\n        \"iso\": \"2000-07-03T00:00:00.000Z\"\n    },\n    \"type\": \"Laundry\",\n    \"amount\": \"3000\",\n    \"exchangeRate\": \"1\",\n    \"description\": \"Different Description?\",\n    \"expenseId\": {\n        \"__type\": \"Pointer\",\n        \"className\": \"TestNewSchema\",\n        \"objectId\": \"d5ZBSS1wWM\"\n    }\n}"
+				},
+				"url": {
+					"raw": "http://localhost:1337/parse/classes/TestLineItem",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "1337",
+					"path": [
+						"parse",
+						"classes",
+						"TestLineItem"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "http://192.168.0.104:1337/parse/classes/TestLineItem/T0KCFJpyvM",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "x-Parse-Session-Token",
+						"value": "r:ae8af4c426fba04327e479094e5172e7",
+						"type": "text"
+					},
+					{
+						"key": "X-Parse-Application-Id",
+						"value": "myAppId1",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "http://192.168.0.104:1337/parse/classes/TestLineItem/T0KCFJpyvM",
+					"protocol": "http",
+					"host": [
+						"192",
+						"168",
+						"0",
+						"104"
+					],
+					"port": "1337",
+					"path": [
+						"parse",
+						"classes",
+						"TestLineItem",
+						"T0KCFJpyvM"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "http://localhost:1337/parse/classes/TestLineItem/xaIZThKvYV",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "X-Parse-Application-Id",
+						"value": "myAppId1",
+						"type": "text"
+					},
+					{
+						"key": "X-Parse-Session-Token",
+						"value": "r:ae8af4c426fba04327e479094e5172e7",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"expenseId\": {\n        \"__type\": \"Pointer\",\n        \"className\": \"TestNewSchema\",\n        \"objectId\": \"DmFlhyIGOq\"\n    },\n    \"exchangeRate\": \"5\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:1337/parse/classes/TestLineItem/xaIZThKvYV",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "1337",
+					"path": [
+						"parse",
+						"classes",
+						"TestLineItem",
+						"xaIZThKvYV"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "http://localhost:1337/parse/classes/TestLineItem?where={\"expenseId\":{\"__type\": \"Pointer\",\"className\": \"TestNewSchema\",\"objectId\":\"DmFlhyIGOq\"}}",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "x-Parse-Session-Token",
+						"value": "r:ae8af4c426fba04327e479094e5172e7",
+						"type": "text"
+					},
+					{
+						"key": "X-Parse-Application-Id",
+						"value": "myAppId1",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "http://localhost:1337/parse/classes/TestLineItem?where={\"expenseId\":{\"__type\": \"Pointer\",\"className\": \"TestNewSchema\",\"objectId\":\"DmFlhyIGOq\"}}",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "1337",
+					"path": [
+						"parse",
+						"classes",
+						"TestLineItem"
+					],
+					"query": [
+						{
+							"key": "where",
+							"value": "{\"expenseId\":{\"__type\": \"Pointer\",\"className\": \"TestNewSchema\",\"objectId\":\"DmFlhyIGOq\"}}"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "http://localhost:1337/parse/classes/TestNewSchema?where={\"name\":\"REST Expense Report1\"}",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "X-Parse-Application-Id",
+						"value": "myAppId1",
+						"type": "text"
+					},
+					{
+						"key": "x-Parse-Session-Token",
+						"value": "r:ae8af4c426fba04327e479094e5172e7",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "http://localhost:1337/parse/classes/TestNewSchema?where={\"name\":\"REST Expense Report1\"}",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "1337",
+					"path": [
+						"parse",
+						"classes",
+						"TestNewSchema"
+					],
+					"query": [
+						{
+							"key": "where",
+							"value": "{\"name\":\"REST Expense Report1\"}"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
